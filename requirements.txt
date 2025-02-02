@@ -2,5 +2,4 @@ streamlit
 pdf2image
 pillow
 google-generativeai
-poppler-utils-binary
 python-dotenv
