@@ -1,5 +1,6 @@
 streamlit
-google-generativeai
-python-dotenv
 pdf2image
-poppler_utils
+pillow
+google-generativeai
+poppler-utils-binary
+python-dotenv

@@ -2,12 +2,16 @@ import streamlit as st
 import base64
 import os
 import io
+import platform
 from typing import Optional, List, Dict
 from dataclasses import dataclass
-from PIL import Image 
+from PIL import Image
 import pdf2image
 import google.generativeai as genai
 from dotenv import load_dotenv
+from datetime import datetime, timedelta
+import time
+from collections import deque
 
 # Load environment variables
 load_dotenv()
@@ -24,9 +28,7 @@ class PDFContent:
     mime_type: str
     data: str
 
-from datetime import datetime, timedelta
-import time
-from collections import deque
+
 
 class RateLimiter:
     """Handles API rate limiting"""
@@ -65,16 +67,19 @@ class ATSAnalyzer:
     def process_pdf(uploaded_file) -> List[Dict[str, str]]:
         """Process uploaded PDF file and convert to required format"""
         try:
-            images = pdf2image.convert_from_bytes(
-                uploaded_file.read(),
-                poppler_path=r"C:/Program Files/poppler/Library/bin"
-            )
+            # Check if running locally or in Streamlit Cloud
+            if platform.system() == "Windows":
+                poppler_path = r"C:/Program Files/poppler/Library/bin"
+            else:
+                poppler_path = None  # Let pdf2image use default system paths
             
+            images = pdf2image.convert_from_bytes(uploaded_file.read(), poppler_path=poppler_path)
+
             first_page = images[0]
             img_byte_arr = io.BytesIO()
             first_page.save(img_byte_arr, format='JPEG')
             img_byte_arr = img_byte_arr.getvalue()
-            
+
             return [{
                 "mime_type": "image/jpeg",
                 "data": base64.b64encode(img_byte_arr).decode()
@@ -236,7 +241,6 @@ class ATSApp:
     @staticmethod
     def extract_job_field(job_description: str) -> str:
         """Extract the job field from the job description"""
-        # This could be enhanced with better field detection logic
         common_fields = ["Data Science", "Software Engineering", "Data Engineering", 
                         "Machine Learning", "DevOps", "Cloud Engineering"]
         for field in common_fields:
